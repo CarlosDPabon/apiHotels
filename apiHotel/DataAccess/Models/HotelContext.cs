@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Protocols;
 
 namespace DataAccess.Models;
 
@@ -17,6 +16,10 @@ public partial class HotelContext : DbContext
     }
 
     public virtual DbSet<Booking> Bookings { get; set; }
+
+    public virtual DbSet<BookingPerson> BookingPeople { get; set; }
+
+    public virtual DbSet<ContactEmergency> ContactEmergencies { get; set; }
 
     public virtual DbSet<Hotel> Hotels { get; set; }
 
@@ -46,7 +49,7 @@ public partial class HotelContext : DbContext
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookingId).HasName("PK__Booking__C6D03BCDBB892A7B");
+            entity.HasKey(e => e.BookingId).HasName("PK__Booking__C6D03BCDFED9ACE5");
 
             entity.ToTable("Booking");
 
@@ -59,8 +62,15 @@ public partial class HotelContext : DbContext
             entity.Property(e => e.CheckOut)
                 .HasColumnType("datetime")
                 .HasColumnName("checkOut");
+            entity.Property(e => e.ContactEmergencyId).HasColumnName("contactEmergencyId");
             entity.Property(e => e.HotelId).HasColumnName("hotelId");
             entity.Property(e => e.RoomId).HasColumnName("roomId");
+            entity.Property(e => e.UserId).HasColumnName("userId");
+
+            entity.HasOne(d => d.ContactEmergency).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.ContactEmergencyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_Booking_contactEmergency");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.HotelId)
@@ -71,19 +81,69 @@ public partial class HotelContext : DbContext
                 .HasForeignKey(d => d.RoomId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_Booking_Room");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_Booking_User");
+        });
+
+        modelBuilder.Entity<BookingPerson>(entity =>
+        {
+            entity.HasKey(e => e.RelationId).HasName("PK__Booking___F0BD8F27403E764A");
+
+            entity.ToTable("Booking_Person");
+
+            entity.Property(e => e.RelationId).HasColumnName("relationId");
+            entity.Property(e => e.BookingId).HasColumnName("bookingId");
+            entity.Property(e => e.PersonId).HasColumnName("personId");
+
+            entity.HasOne(d => d.Booking).WithMany(p => p.BookingPeople)
+                .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_Booking_Person_Booking");
+
+            entity.HasOne(d => d.Person).WithMany(p => p.BookingPeople)
+                .HasForeignKey(d => d.PersonId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_Booking_Person_Person");
+        });
+
+        modelBuilder.Entity<ContactEmergency>(entity =>
+        {
+            entity.HasKey(e => e.ContactEmergencyId).HasName("PK__contactE__A078AC77650BBDEC");
+
+            entity.ToTable("contactEmergency");
+
+            entity.Property(e => e.ContactEmergencyId).HasColumnName("contactEmergencyId");
+            entity.Property(e => e.FirstName)
+                .HasMaxLength(25)
+                .IsUnicode(false)
+                .HasColumnName("firstName");
+            entity.Property(e => e.LastName)
+                .HasMaxLength(25)
+                .IsUnicode(false)
+                .HasColumnName("lastName");
+            entity.Property(e => e.PhoneNumber).HasColumnName("phoneNumber");
+            entity.Property(e => e.UserId).HasColumnName("userId");
+
+            entity.HasOne(d => d.User).WithMany(p => p.ContactEmergencies)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk_contactEmergency_userInfo");
         });
 
         modelBuilder.Entity<Hotel>(entity =>
         {
-            entity.HasKey(e => e.HotelId).HasName("PK__Hotel__17ADC4725BBA7A19");
+            entity.HasKey(e => e.HotelId).HasName("PK__Hotel__17ADC472B0AB0C29");
 
             entity.ToTable("Hotel");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ__Hotel__4849DA010FD0FD23").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ__Hotel__4849DA0116B4F276").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__Hotel__AB6E61641E208496").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Hotel__AB6E61649875B269").IsUnique();
 
-            entity.HasIndex(e => e.NumberIdentification, "UQ__Hotel__F71B6BF68B8258E0").IsUnique();
+            entity.HasIndex(e => e.NumberIdentification, "UQ__Hotel__F71B6BF626EA8F47").IsUnique();
 
             entity.Property(e => e.HotelId).HasColumnName("hotelId");
             entity.Property(e => e.Active).HasColumnName("active");
@@ -115,13 +175,11 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<HotelUser>(entity =>
         {
-            entity.HasKey(e => e.RelationId).HasName("PK__Hotel_Us__F0BD8F2707FCC24C");
+            entity.HasKey(e => e.RelationId).HasName("PK__Hotel_Us__F0BD8F275B671FA3");
 
             entity.ToTable("Hotel_User");
 
-            entity.Property(e => e.RelationId)
-                .ValueGeneratedNever()
-                .HasColumnName("relationId");
+            entity.Property(e => e.RelationId).HasColumnName("relationId");
             entity.Property(e => e.HotelId).HasColumnName("hotelId");
             entity.Property(e => e.UserId).HasColumnName("userId");
 
@@ -138,7 +196,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<IdentificationType>(entity =>
         {
-            entity.HasKey(e => e.IdentificationId).HasName("PK__Identifi__8E2AE6FA849C9E8F");
+            entity.HasKey(e => e.IdentificationId).HasName("PK__Identifi__8E2AE6FA774FE64F");
 
             entity.ToTable("IdentificationType");
 
@@ -151,11 +209,11 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<Module>(entity =>
         {
-            entity.HasKey(e => e.ModuleId).HasName("PK__Module__8EEC8E172A5FDA56");
+            entity.HasKey(e => e.ModuleId).HasName("PK__Module__8EEC8E176C0BEF45");
 
             entity.ToTable("Module");
 
-            entity.HasIndex(e => e.Name, "UQ__Module__72E12F1B6875FC7C").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Module__72E12F1B6C0E33D2").IsUnique();
 
             entity.Property(e => e.ModuleId).HasColumnName("moduleId");
             entity.Property(e => e.Description)
@@ -170,17 +228,20 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<Person>(entity =>
         {
-            entity.HasKey(e => e.PersonId).HasName("PK__Person__EC7D7D4DB92D52EF");
+            entity.HasKey(e => e.PersonId).HasName("PK__Person__EC7D7D4D605D7724");
 
             entity.ToTable("Person");
 
-            entity.HasIndex(e => e.PhoneNumber, "UQ__Person__4849DA017A15A477").IsUnique();
+            entity.HasIndex(e => e.PhoneNumber, "UQ__Person__4849DA01E5EE5273").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__Person__AB6E6164EB4C3D1D").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Person__AB6E616498841F95").IsUnique();
 
-            entity.HasIndex(e => e.NumberIdentification, "UQ__Person__F71B6BF672227FB2").IsUnique();
+            entity.HasIndex(e => e.NumberIdentification, "UQ__Person__F71B6BF6A537B66B").IsUnique();
 
             entity.Property(e => e.PersonId).HasColumnName("personId");
+            entity.Property(e => e.BirthDate)
+                .HasColumnType("datetime")
+                .HasColumnName("birthDate");
             entity.Property(e => e.Email)
                 .HasMaxLength(50)
                 .IsUnicode(false)
@@ -189,6 +250,10 @@ public partial class HotelContext : DbContext
                 .HasMaxLength(25)
                 .IsUnicode(false)
                 .HasColumnName("firstName");
+            entity.Property(e => e.Gender)
+                .HasMaxLength(15)
+                .IsUnicode(false)
+                .HasColumnName("gender");
             entity.Property(e => e.IdentificationId).HasColumnName("identificationId");
             entity.Property(e => e.LastName)
                 .HasMaxLength(25)
@@ -205,7 +270,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<Rol>(entity =>
         {
-            entity.HasKey(e => e.RolId).HasName("PK__Rol__540236341E6976A5");
+            entity.HasKey(e => e.RolId).HasName("PK__Rol__5402363487FA61E2");
 
             entity.ToTable("Rol");
 
@@ -218,7 +283,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<RolModule>(entity =>
         {
-            entity.HasKey(e => e.Relation).HasName("PK__Rol_Modu__E959000F786EB87C");
+            entity.HasKey(e => e.Relation).HasName("PK__Rol_Modu__E959000F7228BD99");
 
             entity.ToTable("Rol_Module");
 
@@ -239,7 +304,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<Room>(entity =>
         {
-            entity.HasKey(e => e.RoomId).HasName("PK__Room__6C3BF5BE60AFCD49");
+            entity.HasKey(e => e.RoomId).HasName("PK__Room__6C3BF5BE0F1414D7");
 
             entity.ToTable("Room");
 
@@ -253,6 +318,10 @@ public partial class HotelContext : DbContext
                 .HasMaxLength(25)
                 .IsUnicode(false)
                 .HasColumnName("type");
+            entity.Property(e => e.Ubication)
+                .HasMaxLength(25)
+                .IsUnicode(false)
+                .HasColumnName("ubication");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.Rooms)
                 .HasForeignKey(d => d.HotelId)
@@ -262,7 +331,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<RoomTax>(entity =>
         {
-            entity.HasKey(e => e.RelationId).HasName("PK__Room_Tax__F0BD8F27106BA35A");
+            entity.HasKey(e => e.RelationId).HasName("PK__Room_Tax__F0BD8F275D7B8B38");
 
             entity.ToTable("Room_Tax");
 
@@ -282,7 +351,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<Tax>(entity =>
         {
-            entity.HasKey(e => e.TaxId).HasName("PK__Tax__24D2883969332CDA");
+            entity.HasKey(e => e.TaxId).HasName("PK__Tax__24D288390579C789");
 
             entity.ToTable("Tax");
 
@@ -296,11 +365,11 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<UserInfo>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__UserInfo__CB9A1CFFC2A427EB");
+            entity.HasKey(e => e.UserId).HasName("PK__UserInfo__CB9A1CFF07C8B11E");
 
             entity.ToTable("UserInfo");
 
-            entity.HasIndex(e => e.UserName, "UQ__UserInfo__66DCF95C5B98B655").IsUnique();
+            entity.HasIndex(e => e.UserName, "UQ__UserInfo__66DCF95C0FF752A7").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("userId");
             entity.Property(e => e.Password)
@@ -321,7 +390,7 @@ public partial class HotelContext : DbContext
 
         modelBuilder.Entity<UserInfoRol>(entity =>
         {
-            entity.HasKey(e => e.RelationId).HasName("PK__UserInfo__F0BD8F27D7AAA763");
+            entity.HasKey(e => e.RelationId).HasName("PK__UserInfo__F0BD8F27955F411A");
 
             entity.ToTable("UserInfo_Rol");
 

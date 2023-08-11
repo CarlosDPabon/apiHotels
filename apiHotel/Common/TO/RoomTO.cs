@@ -10,12 +10,16 @@ namespace Common.TO
     public class RoomTO
     {
         public int RoomId { get; set; }
+
         public int HotelId { get; set; }
+
         public int NumberRoom { get; set; }
 
         public int Capacity { get; set; }
 
         public string Type { get; set; } = null!;
+
+        public string Ubication { get; set; } = null!;
 
         public int Price { get; set; }
 

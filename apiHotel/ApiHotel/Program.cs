@@ -2,8 +2,8 @@ using DataAccess.Models;
 using Domain.Core.Core;
 using Domain.Core.ICore;
 using Microsoft.EntityFrameworkCore;
-using Repository.IRepository;
 using Repository.Repository;
+using Repository.UnitOfWork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +14,18 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddTransient<ICoreAgent, CoreAgent>();
-builder.Services.AddTransient<IHotelRepository, HotelRepository>();
-builder.Services.AddTransient<IRoomRepository, RoomRepository>();
-builder.Services.AddDbContext<HotelContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("HotelApi")));
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IRepository<Room>, Repository<Room>>();
+builder.Services.AddScoped<IRepository<Hotel>, Repository<Hotel>>();
+builder.Services.AddScoped<IRepository<Booking>, Repository<Booking>>();
+builder.Services.AddScoped<IRepository<Person>, Repository<Person>>();
+builder.Services.AddScoped<IRepository<UserInfo>, Repository<UserInfo>>();
+builder.Services.AddScoped<IRepository<HotelUser>, Repository<HotelUser>>();
+builder.Services.AddScoped<IRepository<BookingPerson>, Repository<BookingPerson>>();
 
+builder.Services.AddDbContext<HotelContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("HotelApi")));
+builder.Services.AddTransient<ICoreAgent, CoreAgent>();
+builder.Services.AddTransient<ICoreTraveler, CoreTraveler>();
 
 var x = AppDomain.CurrentDomain.GetAssemblies();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());

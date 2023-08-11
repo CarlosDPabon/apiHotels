@@ -15,6 +15,8 @@ public partial class Room
 
     public string Type { get; set; } = null!;
 
+    public string Ubication { get; set; } = null!;
+
     public int Price { get; set; }
 
     public bool Active { get; set; }

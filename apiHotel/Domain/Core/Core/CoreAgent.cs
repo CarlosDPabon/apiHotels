@@ -1,57 +1,84 @@
-﻿using Common.TO;
+﻿using AutoMapper;
+using Common.TO;
+using DataAccess.Models;
 using Domain.Core.ICore;
-using Repository.IRepository;
+using Repository.Repository;
+using Repository.UnitOfWork;
 
 namespace Domain.Core.Core
 {
     public class CoreAgent : ICoreAgent
     {
-        private readonly IHotelRepository _hotelRepository;
-        private readonly IRoomRepository _roomRepository;
+        private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CoreAgent(IHotelRepository hotelRepository, IRoomRepository roomRepository) { 
-            _hotelRepository = hotelRepository;
-            _roomRepository = roomRepository;
+        public CoreAgent(
+            IRepository<Hotel> repository,
+            IMapper mapper,
+            IUnitOfWork unitOfWork) { 
+            _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         #region Admin Hotels
-        public bool createHotel(HotelTO hotelTO)
+        public async Task<HotelTO> createHotel(HotelTO hotelTO)
         {
-            return _hotelRepository.create(hotelTO);
+            var hotel = await _unitOfWork.repositoryHotel().Result.CreateAsync(_mapper.Map<Hotel>(hotelTO));
+            _unitOfWork.saveChanges();
+            return _mapper.Map<HotelTO>(hotel);
+
         }
-        public bool updateHotel(HotelTO hotelTO)
+        public async Task updateHotel(HotelTO hotelTO)
         {
-            return _hotelRepository.update(hotelTO);
+            var actualEntity = _unitOfWork.repositoryHotel().Result.GetAsync(hotelTO.HotelId).Result;
+            await _unitOfWork.repositoryHotel().Result.UpdateAsync(actualEntity, _mapper.Map<Hotel>(hotelTO));
+            _unitOfWork.saveChanges();
         }
-        public List<HotelTO> searchAllHotels()
+        public async Task<IEnumerable<HotelTO>> searchAllHotels()
         {
-            return _hotelRepository.get();
+            var result = await _unitOfWork.repositoryHotel().Result.GetAllAsync();
+            return _mapper.Map<List<HotelTO>>(result); 
         }
-        public bool hotelState(int IdHotel)
+        public async Task hotelState(int IdHotel)
         {
-            HotelTO hotelTO = _hotelRepository.getById(IdHotel);
-            hotelTO.Active = hotelTO.Active ? false : true;
-            return _hotelRepository.update(hotelTO);
+            var result = _unitOfWork.repositoryHotel().Result.GetAsync(IdHotel).Result;
+            result.Active = result.Active ? false : true;
+            await updateHotel(_mapper.Map<HotelTO>(result));
         }
         #endregion
 
         #region Admin Rooms
-        public bool createRoom(RoomTO roomTO)
+        public async Task<RoomTO> createRoom(RoomTO roomTO)
         {
-            return _roomRepository.create(roomTO);
+            var room = await _unitOfWork.repositoryRoom().Result.CreateAsync(_mapper.Map<Room>(roomTO));
+            _unitOfWork.saveChanges();
+            return _mapper.Map<RoomTO>(room);
         }
-        public bool updateRoom(RoomTO roomTO)
+        public async Task updateRoom(RoomTO roomTO)
         {
-            return _roomRepository.update(roomTO);   
+            var actualEntity = _unitOfWork.repositoryRoom().Result.GetAsync(roomTO.RoomId).Result;
+            await _unitOfWork.repositoryRoom().Result.UpdateAsync(actualEntity, _mapper.Map<Room>(roomTO));
+            _unitOfWork.saveChanges();
         }
-        public List<RoomTO> searchAllRooms()
+        public async Task<IEnumerable<RoomTO>> searchAllRooms()
         {
-            return _roomRepository.get(); 
+            var result = await _unitOfWork.repositoryRoom().Result.GetAllAsync();
+            return _mapper.Map<List<RoomTO>>(result);
         }
-        public bool roomState(int IdRoom) {
-            RoomTO roomTO = _roomRepository.getById(IdRoom);
-            roomTO.Active = roomTO.Active ? false : true;
-            return _roomRepository.update(roomTO);
+        public async Task roomState(int IdRoom) {
+            var result = _unitOfWork.repositoryRoom().Result.GetAsync(IdRoom).Result;
+            result.Active = result.Active ? false : true;
+            await updateRoom(_mapper.Map<RoomTO>(result));
+        }
+        #endregion
+
+        #region Bookings
+        public async Task<List<BookingTO>> getBookingsHotels (string userName)
+        {
+            var agent = await _unitOfWork.repositoryUserInfo().Result.Query(u => u.UserName.Equals(userName));
+            var hotels = _unitOfWork.repositoryHotelUser().Result.GetAllAsync().Result.Where(hr => hr.UserId.Equals(agent.UserId));
+            var bookings = await _unitOfWork.repositoryBooking().Result.GetAllAsync();
+            return _mapper.Map<List<BookingTO>>((from h in hotels join b in bookings on h.HotelId equals b.HotelId select b).ToList());
         }
         #endregion
     }

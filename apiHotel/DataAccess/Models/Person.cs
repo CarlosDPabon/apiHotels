@@ -15,9 +15,15 @@ public partial class Person
 
     public string LastName { get; set; } = null!;
 
+    public DateTime BirthDate { get; set; }
+
+    public string Gender { get; set; } = null!;
+
     public string Email { get; set; } = null!;
 
     public int PhoneNumber { get; set; }
+
+    public virtual ICollection<BookingPerson> BookingPeople { get; set; } = new List<BookingPerson>();
 
     public virtual IdentificationType Identification { get; set; } = null!;
 

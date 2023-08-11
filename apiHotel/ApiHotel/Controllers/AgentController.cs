@@ -19,32 +19,32 @@ namespace ApiHotel.Controllers
         #region Admin Hotels
         [HttpPost]
         [Route("hotel/createHotel")]
-        public IActionResult createHotel(HotelTO hotel)
+
+        public async Task<IActionResult> createHotel(HotelTO hotel)
         {
-            bool result = _coreAgent.createHotel(hotel);
-            return result ? Ok() : BadRequest();
+            var result = await _coreAgent.createHotel(hotel);
+            return result != null ? Ok() : BadRequest();
         }
         [HttpPut]
         [Route("hotel/updateHotel")]
-        public IActionResult updateHotel(HotelTO hotelTO)
+        public async Task<IActionResult> updateHotel(HotelTO hotelTO)
         {
-            bool result = _coreAgent.updateHotel(hotelTO);
-            return result ? Ok() : BadRequest();
+            var result = _coreAgent.updateHotel(hotelTO);
+            return result.IsCompleted ? Ok() : BadRequest(result.ToString());
         }
         [HttpPut]
         [Route("hotel/manageStateHotel")]
-        public IActionResult hotelState(int idHotel)
+        public async Task<IActionResult> hotelState(int idHotel)
         {
-            bool result = _coreAgent.hotelState(idHotel);
-            return result ? Ok() : BadRequest();
+            var result = _coreAgent.hotelState(idHotel);
+            return result.IsCompleted ? Ok() : BadRequest(result.ToString());
         }
 
         [HttpGet]
         [Route("hotel/getHotels")]
-        public IActionResult getHotels()
+        public async Task<IActionResult> getHotels()
         {
-            var x = _coreAgent.searchAllHotels();
-            return Ok(x);
+            return Ok(await _coreAgent.searchAllHotels());
         }
 
         #endregion
@@ -52,30 +52,39 @@ namespace ApiHotel.Controllers
         #region Admin Rooms
         [HttpPost]
         [Route("room/createRoom")]
-        public IActionResult createRoom(RoomTO roomTO)
+        public async Task<IActionResult> createRoom(RoomTO roomTO)
         {
-            bool result = _coreAgent.createRoom(roomTO);
-            return result ? Ok() : BadRequest();
+            var result = _coreAgent.createRoom(roomTO);
+            return result.IsCompletedSuccessfully ? Ok() : BadRequest();
         }
         [HttpPut]
         [Route("room/updateRoom")]
-        public IActionResult updateRoom(RoomTO roomTO)
+        public async Task<IActionResult> updateRoom(RoomTO roomTO)
         {
-            bool result = _coreAgent.updateRoom(roomTO);
-            return result ? Ok() : BadRequest();
+            var result = _coreAgent.updateRoom(roomTO);
+            return result.IsCompletedSuccessfully ? Ok() : BadRequest();
         }
         [HttpPut]
         [Route("room/manageStateRoom")]
-        public IActionResult roomState(int idRoom)
+        public async Task<IActionResult> roomState(int idRoom)
         {
-            bool result = _coreAgent.roomState(idRoom);
-            return result ? Ok() : BadRequest();
+            var result = _coreAgent.roomState(idRoom);
+            return result.IsCompletedSuccessfully ? Ok() : BadRequest();
         }
         [HttpGet]
         [Route("room/getRooms")]
-        public IActionResult getRooms()
+        public async Task<IActionResult> getRooms()
         {
-            List<RoomTO> result = _coreAgent.searchAllRooms();
+            var result = await _coreAgent.searchAllRooms();
+            return result != null ? Ok(result) : BadRequest();
+        }
+        #endregion
+        #region Booking
+        [HttpGet]
+        [Route("booking/getBookings")]
+        public async Task<IActionResult> getBookingHotels(string userName)
+        {
+            var result = await _coreAgent.getBookingsHotels(userName);
             return result != null ? Ok(result) : BadRequest();
         }
         #endregion
