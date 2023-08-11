@@ -1,6 +1,6 @@
 DROP DATABASE HOTEL;
---CREATE DATABASE HOTEL;
---USE HOTEL;
+CREATE DATABASE HOTEL;
+USE HOTEL;
 
 CREATE TABLE IdentificationType(
 identificationId INT IDENTITY PRIMARY KEY,
@@ -93,7 +93,7 @@ CONSTRAINT fk_Room_Tax_Tax FOREIGN KEY (TaxId) REFERENCES Tax (TaxId)
 );
 
 CREATE TABLE contactEmergency (
-contactEmergencyId INT PRIMARY KEY,
+contactEmergencyId INT IDENTITY PRIMARY KEY,
 userId INT NOT NULL,
 firstName VARCHAR(25),
 lastName VARCHAR(25),
